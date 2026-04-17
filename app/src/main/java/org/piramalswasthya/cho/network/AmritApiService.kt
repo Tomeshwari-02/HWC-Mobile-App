@@ -36,6 +36,7 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
 import org.piramalswasthya.cho.model.EarDiagnosisNetwork
+import org.piramalswasthya.cho.model.PainAssessmentNetwork
 
 interface AmritApiService {
 
@@ -285,6 +286,12 @@ interface AmritApiService {
 
     @POST("/hwc-api/earDiagnosis/getAll")
     suspend fun getEarVisits(@Body villageList: org.piramalswasthya.cho.network.VillageIdList): Response<ResponseBody>
+
+    @POST("/hwc-api/painSymptomAssessment/saveAll")
+    suspend fun postPainForm(@Body earList: List<PainAssessmentNetwork>): Response<ResponseBody>
+
+    @POST("/hwc-api/painSymptomAssessment/getAll")
+    suspend fun getPainVisits(@Body villageList: org.piramalswasthya.cho.network.VillageIdList): Response<ResponseBody>
 
 
 }

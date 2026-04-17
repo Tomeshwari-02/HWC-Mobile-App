@@ -8,3 +8,12 @@ data class EarDiagnosisNetwork(
     val beneficiaryRegID: String,
     val data: EarDiagnosisAssessment
 )
+
+@JsonClass(generateAdapter = true)
+data class PainAssessmentNetwork(
+    val beneficiaryID: String,
+    val beneficiaryRegID: String,
+    val data: PainAndSymptomAssessment
+)
+
+
