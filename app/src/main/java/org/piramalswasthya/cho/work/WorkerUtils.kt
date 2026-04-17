@@ -280,6 +280,16 @@ object WorkerUtils {
             .enqueueUniqueWork(PrescripTemplateWorker.name, ExistingWorkPolicy.KEEP, workRequest).state
     }
 
+    fun earPushWorker(context: Context) {
+        val pushEarToAmrit = OneTimeWorkRequestBuilder<PushEarToAmritWorker>()
+            .setConstraints(networkOnlyConstraint)
+            .build()
+
+        WorkManager.getInstance(context)
+            .beginUniqueWork("ear-push-sync", ExistingWorkPolicy.APPEND_OR_REPLACE, pushEarToAmrit)
+            .enqueue()
+    }
+
     fun cancelAllWork(context: Context) {
         val workManager = WorkManager.getInstance(context)
         workManager.cancelAllWork()
