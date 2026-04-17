@@ -142,7 +142,7 @@ object WorkerUtils {
             // The three doctor-info variants are independent — run them in parallel.
             .then(listOf(pushBenDoctorInfoPendingTestToAmrit, pushBenDoctorInfoWithoutTestToAmrit, pushBenDoctorInfoAfterTestToAmrit))
             // Specialty health pushes are also independent — run them in parallel.
-            .then(listOf(pushPWRToAmritWorker, pushInfantRegisterWorkRequest, pushPNCWorkRequest, pushECToAmritWorker, pushImmunizationWorkRequest))
+            .then(listOf(pushPWRToAmritWorker, pushInfantRegisterWorkRequest, pushPNCWorkRequest, pushECToAmritWorker, pushImmunizationWorkRequest, pushOphthalmicToAmritWorker))
 //           .then(pushLabDataToAmrit)
             .then(listOf(
                 pullOphthalmicFromAmritWorker
@@ -276,6 +276,16 @@ object WorkerUtils {
 
         WorkManager.getInstance(context)
             .enqueueUniqueWork(PrescripTemplateWorker.name, ExistingWorkPolicy.KEEP, workRequest).state
+    }
+
+    fun ophthalmicPushWorker(context: Context) {
+        val pushOphthalmicToAmrit = OneTimeWorkRequestBuilder<PushOphthalmicToAmritWorker>()
+            .setConstraints(networkOnlyConstraint)
+            .build()
+
+        WorkManager.getInstance(context)
+            .beginUniqueWork("ophthalmic-push-sync", ExistingWorkPolicy.APPEND_OR_REPLACE, pushOphthalmicToAmrit)
+            .enqueue()
     }
 
     fun cancelAllWork(context: Context) {
