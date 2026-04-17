@@ -48,6 +48,9 @@ object WorkerUtils {
             .setConstraints(networkOnlyConstraint)
             .build()
 
+        val pullPsychosocialCaregiverSupport = OneTimeWorkRequestBuilder<PullPsychosocialCaregiverSupportWorker>()
+            .setConstraints(networkOnlyConstraint)
+            .build()
 
 
         val workManager = WorkManager.getInstance(context)
@@ -57,7 +60,9 @@ object WorkerUtils {
             .then(pullBenFlowFromAmritWorker)
             .then(pullCbacFromAmritWorker)
             .then(listOf(
-                pullEarFromAmritWorker
+                pullEarFromAmritWorker,
+                pullPsychosocialCaregiverSupport
+
             ))
             .enqueue()
     }
@@ -130,6 +135,14 @@ object WorkerUtils {
             .setConstraints(networkOnlyConstraint)
             .build()
 
+        val pushPsychosocialCaregiverSupportWorker = OneTimeWorkRequestBuilder<PushPsychosocialCaregiverSupportWorker>()
+            .setConstraints(networkOnlyConstraint)
+            .build()
+
+        val pullPsychosocialCaregiverSupport = OneTimeWorkRequestBuilder<PullPsychosocialCaregiverSupportWorker>()
+            .setConstraints(networkOnlyConstraint)
+            .build()
+
 
 
         val workManager = WorkManager.getInstance(context)
@@ -144,10 +157,10 @@ object WorkerUtils {
             // The three doctor-info variants are independent — run them in parallel.
             .then(listOf(pushBenDoctorInfoPendingTestToAmrit, pushBenDoctorInfoWithoutTestToAmrit, pushBenDoctorInfoAfterTestToAmrit))
             // Specialty health pushes are also independent — run them in parallel.
-            .then(listOf(pushPWRToAmritWorker, pushInfantRegisterWorkRequest, pushPNCWorkRequest, pushECToAmritWorker, pushImmunizationWorkRequest, pushEarToAmritWorker))
+            .then(listOf(pushPWRToAmritWorker, pushInfantRegisterWorkRequest, pushPNCWorkRequest, pushECToAmritWorker, pushImmunizationWorkRequest, pushEarToAmritWorker, pushPsychosocialCaregiverSupportWorker))
 //           .then(pushLabDataToAmrit)
             .then(listOf(
-                pullEarFromAmritWorker
+                pullEarFromAmritWorker,pullPsychosocialCaregiverSupport
             ))
             .enqueue()
     }
@@ -287,6 +300,16 @@ object WorkerUtils {
 
         WorkManager.getInstance(context)
             .beginUniqueWork("ear-push-sync", ExistingWorkPolicy.APPEND_OR_REPLACE, pushEarToAmrit)
+            .enqueue()
+    }
+
+    fun psychosocialCaregiverSupport(context: Context) {
+        val pushPsychosocialCaregiverSupportWorker = OneTimeWorkRequestBuilder<PushPsychosocialCaregiverSupportWorker>()
+            .setConstraints(networkOnlyConstraint)
+            .build()
+
+        WorkManager.getInstance(context)
+            .beginUniqueWork("psychosocial-push-sync", ExistingWorkPolicy.APPEND_OR_REPLACE, pushPsychosocialCaregiverSupportWorker)
             .enqueue()
     }
 

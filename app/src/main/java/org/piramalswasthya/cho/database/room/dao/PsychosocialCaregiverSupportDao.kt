@@ -43,4 +43,8 @@ interface PsychosocialCaregiverSupportDao {
         patientID: String,
         benVisitNo: Int
     ): PsychosocialCaregiverSupport?
+
+    @Query("SELECT * FROM PSYCHOSOCIAL_CAREGIVER_SUPPORT WHERE syncState = 0")
+    suspend fun getUnsyncedAssessments(): List<PsychosocialCaregiverSupport>
+
 }
