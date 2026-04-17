@@ -44,6 +44,10 @@ object WorkerUtils {
             .setConstraints(networkOnlyConstraint)
             .build()
 
+        val pullOphthalmicFromAmritWorker = OneTimeWorkRequestBuilder<PullOphthalmicFromAmritWorker>()
+            .setConstraints(networkOnlyConstraint)
+            .build()
+
 
 
         val workManager = WorkManager.getInstance(context)
@@ -52,6 +56,9 @@ object WorkerUtils {
             .then(pullFormAmritWorker)
             .then(pullBenFlowFromAmritWorker)
             .then(pullCbacFromAmritWorker)
+            .then(listOf(
+                pullOphthalmicFromAmritWorker
+            ))
             .enqueue()
     }
 
@@ -115,6 +122,14 @@ object WorkerUtils {
             .setConstraints(networkOnlyConstraint)
             .build()
 
+        val pushOphthalmicToAmritWorker = OneTimeWorkRequestBuilder<PushOphthalmicToAmritWorker>()
+            .setConstraints(networkOnlyConstraint)
+            .build()
+
+        val pullOphthalmicFromAmritWorker = OneTimeWorkRequestBuilder<PullOphthalmicFromAmritWorker>()
+            .setConstraints(networkOnlyConstraint)
+            .build()
+
         val workManager = WorkManager.getInstance(context)
         workManager
             .beginUniqueWork(syncOneTimeAmritSyncWorker, ExistingWorkPolicy.APPEND_OR_REPLACE, pullPatientFromAmritWorker)
@@ -129,6 +144,9 @@ object WorkerUtils {
             // Specialty health pushes are also independent — run them in parallel.
             .then(listOf(pushPWRToAmritWorker, pushInfantRegisterWorkRequest, pushPNCWorkRequest, pushECToAmritWorker, pushImmunizationWorkRequest))
 //           .then(pushLabDataToAmrit)
+            .then(listOf(
+                pullOphthalmicFromAmritWorker
+            ))
             .enqueue()
     }
 

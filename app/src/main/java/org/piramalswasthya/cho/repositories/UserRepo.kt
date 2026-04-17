@@ -53,6 +53,7 @@ import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.util.Date
 import javax.inject.Inject
+import org.json.JSONException
 
 class UserRepo @Inject constructor(
     private val userDao: UserDao,
@@ -71,7 +72,7 @@ class UserRepo @Inject constructor(
             userDao.getLoggedInUser()?.asDomainModel()
         }
     }
-     fun getLoggedInUserAsFlow(): Flow<Int?> {
+    fun getLoggedInUserAsFlow(): Flow<Int?> {
         return userDao.getLoggedInUserAsFlow().map { it?.asDomainModel()?.userId }
     }
     suspend fun isUserLoggedIn(): Int {
@@ -80,19 +81,19 @@ class UserRepo @Inject constructor(
         }
     }
 
-     suspend fun setOutreachProgram(loginType: String?,
-                                      selectedOption: String?,
-                                      loginTimeStamp: String?,
-                                      logoutTimeStamp: String?,
-                                      lat: Double?,
-                                      long: Double?,
-                                      logoutType: String?,
-                                    userImage: String?,
-                                    isOutOfReach:Boolean?
-     ) {
-         var user = userDao.getLoggedInUser()
-         var userName = user?.userName
-         var userId = user?.userId
+    suspend fun setOutreachProgram(loginType: String?,
+                                   selectedOption: String?,
+                                   loginTimeStamp: String?,
+                                   logoutTimeStamp: String?,
+                                   lat: Double?,
+                                   long: Double?,
+                                   logoutType: String?,
+                                   userImage: String?,
+                                   isOutOfReach:Boolean?
+    ) {
+        var user = userDao.getLoggedInUser()
+        var userName = user?.userName
+        var userId = user?.userId
         val selectedOutreachProgram = SelectedOutreachProgram(
             userId = userId,
             userName = userName,
@@ -282,7 +283,7 @@ class UserRepo @Inject constructor(
             }
         }
 
-        }
+    }
 
 
     private suspend fun getTokenTmc(userName: String, password: String, context: Context) {
@@ -367,71 +368,80 @@ class UserRepo @Inject constructor(
 
             val responseStatusCode = responseBody.getInt("statusCode")
             if (responseStatusCode == 200) {
-                val data = responseBody.getJSONObject("data")
-                val otherLoc = data.getJSONObject("otherLoc")
-                val stateId = otherLoc.getString("stateID")
-                val districtList = otherLoc.getJSONArray("districtList")
-                val districtObject = districtList.getJSONObject(0)
-                val districtId = districtObject.getString("districtID")
-                val districtName = districtObject.getString("districtName")
-                val blockId = districtObject.getString("blockId")
-                val blockName = districtObject.getString("blockName")
-                val villageList = districtObject.getJSONArray("villageList")
+                try {
+                    val data = responseBody.getJSONObject("data")
+                    val otherLoc = data.getJSONObject("otherLoc")
+                    val stateId = otherLoc.getString("stateID")
+                    val districtList = otherLoc.getJSONArray("districtList")
+                    val districtObject = districtList.getJSONObject(0)
+                    val districtId = districtObject.getString("districtID")
+                    val districtName = districtObject.getString("districtName")
+                    val blockId = districtObject.getString("blockId")
+                    val blockName = districtObject.getString("blockName")
+                    val villageList = districtObject.getJSONArray("villageList")
 
-                val itemType = object : TypeToken<List<VillageLocationData>>() {}.type
-                var villageLocationDataList : List<VillageLocationData> = Gson().fromJson(villageList.toString(), itemType)
-                villageLocationDataList = villageLocationDataList.toSet().toList()
+                    val itemType = object : TypeToken<List<VillageLocationData>>() {}.type
+                    var villageLocationDataList : List<VillageLocationData> = Gson().fromJson(villageList.toString(), itemType)
+                    villageLocationDataList = villageLocationDataList.toSet().toList()
 
-                val stateMaster = data.getJSONArray("stateMaster")
-                var stateMasterName : String = ""
-                var govtLGDStateID : Int? = null
-                for (i in 0 until stateMaster.length()) {
-                    val jsonObject = stateMaster.getJSONObject(i)
-                    val id = jsonObject.getInt("stateID").toString()
-                    val stateName = jsonObject.getString("stateName")
-                    val lgdStateId = jsonObject.getString("govtLGDStateID")
-                    if (id == stateId) {
-                         stateMasterName = stateName
-                        govtLGDStateID = lgdStateId.toInt()
+                    val stateMaster = data.getJSONArray("stateMaster")
+                    var stateMasterName : String = ""
+                    var govtLGDStateID : Int? = null
+                    for (i in 0 until stateMaster.length()) {
+                        val jsonObject = stateMaster.getJSONObject(i)
+                        val id = jsonObject.getInt("stateID").toString()
+                        val stateName = jsonObject.getString("stateName")
+                        val lgdStateId = jsonObject.getString("govtLGDStateID")
+                        if (id == stateId) {
+                            stateMasterName = stateName
+                            govtLGDStateID = lgdStateId.toInt()
+                        }
                     }
-                }
-                if(stateMasterDao.getStateById(stateId.toInt()) == null ){
-                    stateMasterDao.insertStates(StateMaster(stateId.toInt(), stateMasterName, govtLGDStateID))
-                }
-                if(districtMasterDao.getDistrictById(districtId.toInt()) == null){
-                    districtMasterDao.insertDistrict(DistrictMaster(districtId.toInt(),stateId.toInt(),govtLGDStateID,null, districtName))
-                }
-                if(blockMasterDao.getBlockById(blockId.toInt()) == null){
-                    blockMasterDao.insertBlock(BlockMaster(blockId.toInt(),districtId.toInt(),null,null, blockName))
-                }
-                var villageIds = ""
-                for(element in villageLocationDataList) {
-                    var id = element.districtBranchID
-                    villageIds += "$id,"
-                    var name = element.villageName
-                    if (villageMasterDao.getVillageById(id.toInt()) == null) {
-                        villageMasterDao.insertVillage(
-                            VillageMaster(
-                                id.toInt(),
-                                blockId.toInt(),
-                                null,
-                                null,
-                                name?:""
+                    if(stateMasterDao.getStateById(stateId.toInt()) == null ){
+                        stateMasterDao.insertStates(StateMaster(stateId.toInt(), stateMasterName, govtLGDStateID))
+                    }
+                    if(districtMasterDao.getDistrictById(districtId.toInt()) == null){
+                        districtMasterDao.insertDistrict(DistrictMaster(districtId.toInt(),stateId.toInt(),govtLGDStateID,null, districtName))
+                    }
+                    if(blockMasterDao.getBlockById(blockId.toInt()) == null){
+                        blockMasterDao.insertBlock(BlockMaster(blockId.toInt(),districtId.toInt(),null,null, blockName))
+                    }
+
+                    var villageIds = ""
+                    for(element in villageLocationDataList) {
+                        var id = element.districtBranchID
+                        villageIds += "$id,"
+                        var name = element.villageName
+                        if (villageMasterDao.getVillageById(id.toInt()) == null) {
+                            villageMasterDao.insertVillage(
+                                VillageMaster(
+                                    id.toInt(),
+                                    blockId.toInt(),
+                                    null,
+                                    null,
+                                    name?:""
+                                )
                             )
-                        )
+
+                        }
                     }
+
+                    user!!.stateId = stateId.toInt()
+                    user!!.districtID = districtId.toInt()
+                    user!!.blockID = blockId.toInt()
+
+                    if(villageIds.isNotEmpty()){
+                        user!!.assignVillageIds = villageIds.substring(0, villageIds.length-1)
+                    }
+
+                    preferenceDao.saveUserLocationData(LocationData(
+                        stateId.toInt(), stateMasterName, districtId.toInt(),districtName, blockId.toInt(),blockName, villageLocationDataList))
+                } catch (e: JSONException) {
+                    Timber.e(
+                        e,
+                        "Error parsing location details from BE. Some Location data like stateID may be missing."
+                    )
                 }
-
-                user!!.stateId = stateId.toInt()
-                user!!.districtID = districtId.toInt()
-                user!!.blockID = blockId.toInt()
-
-                if(villageIds.isNotEmpty()){
-                    user!!.assignVillageIds = villageIds.substring(0, villageIds.length-1)
-                }
-
-                preferenceDao.saveUserLocationData(LocationData(
-                    stateId.toInt(), stateMasterName, districtId.toInt(),districtName, blockId.toInt(),blockName, villageLocationDataList))
             }
         }
     }
@@ -449,7 +459,7 @@ class UserRepo @Inject constructor(
         return roles.substring(0, roles.length - 1)
     }
 
-     private fun encrypt(password: String): String {
+    private fun encrypt(password: String): String {
         val util = CryptoUtil()
         return util.encrypt(password)
     }
@@ -542,38 +552,38 @@ class UserRepo @Inject constructor(
         user.masterVillageName = masterVillageName
         userDao.update(user)
     }
-     suspend fun setUserMasterVillage(user:UserCache, userMasterVillage: UserMasterVillage) {
-         val response = tmcNetworkApiService.setUserMasterVillage(userMasterVillage)
-         val statusCode = response.code()
-         if (statusCode == 200) {
-             val responseString = response.body()?.string()
-             val responseJson = JSONObject(responseString!!)
-             val responseStatusCode = responseJson.getInt("statusCode")
-             if (responseStatusCode == 200) {
-                 val data = responseJson.getJSONObject("data")
-                 val masterVillageName = data.getString("villageName")
-                 user.masterVillageName = masterVillageName
-                 val masterVillageId = data.getInt("districtBranchID")
-                 user.masterVillageID = masterVillageId
-                 val masterLocAddress = data.getString("address")
-                 user.masterLocationAddress = masterLocAddress
-                 val loginDistance = data.getInt("loginDistance")
-                 user.loginDistance = loginDistance
-                 val blockId = data.getInt("blockID")
-                 user.masterBlockID = blockId
-                 val masterLatitude = data.getDouble("latitude")
-                 user.masterLatitude = masterLatitude
-                 val masterLongitude = data.getDouble("longitude")
-                 user.masterLongitude = masterLongitude
+    suspend fun setUserMasterVillage(user:UserCache, userMasterVillage: UserMasterVillage) {
+        val response = tmcNetworkApiService.setUserMasterVillage(userMasterVillage)
+        val statusCode = response.code()
+        if (statusCode == 200) {
+            val responseString = response.body()?.string()
+            val responseJson = JSONObject(responseString!!)
+            val responseStatusCode = responseJson.getInt("statusCode")
+            if (responseStatusCode == 200) {
+                val data = responseJson.getJSONObject("data")
+                val masterVillageName = data.getString("villageName")
+                user.masterVillageName = masterVillageName
+                val masterVillageId = data.getInt("districtBranchID")
+                user.masterVillageID = masterVillageId
+                val masterLocAddress = data.getString("address")
+                user.masterLocationAddress = masterLocAddress
+                val loginDistance = data.getInt("loginDistance")
+                user.loginDistance = loginDistance
+                val blockId = data.getInt("blockID")
+                user.masterBlockID = blockId
+                val masterLatitude = data.getDouble("latitude")
+                user.masterLatitude = masterLatitude
+                val masterLongitude = data.getDouble("longitude")
+                user.masterLongitude = masterLongitude
 
-                 val use = user
-                 use.masterVillageName
+                val use = user
+                use.masterVillageName
 
-                 userDao.update(user)
+                userDao.update(user)
 
-             }
-         }
-     }
+            }
+        }
+    }
     suspend fun processUnsyncedAuditData(): Boolean{
         val loginAuditDataListUnsynced: List<SelectedOutreachProgram> = userDao.getLoginAuditDataListUnsynced()
         if(loginAuditDataListUnsynced.isNotEmpty()){
@@ -586,8 +596,8 @@ class UserRepo @Inject constructor(
                 }
                 is NetworkResult.Error -> {
                     if(response.code == socketTimeoutException){
-                    throw SocketTimeoutException("caught exception")
-                }
+                        throw SocketTimeoutException("caught exception")
+                    }
                     return false
                 }
                 else ->{

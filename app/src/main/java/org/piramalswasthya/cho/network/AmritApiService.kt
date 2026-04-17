@@ -35,7 +35,7 @@ import retrofit2.http.Headers
 import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
-
+import org.piramalswasthya.cho.model.OphthalmicNetwork
 interface AmritApiService {
 
 
@@ -278,6 +278,12 @@ interface AmritApiService {
     suspend fun getPharmacistStockItemList(
         @Body request: StockItemRequest
     ):Response<ResponseBody>
+
+    @POST("/hwc-api/opthalmicVisit/saveAll")
+    suspend fun postOphthalmicForm(@Body ophthalmicList: List<OphthalmicNetwork>): Response<ResponseBody>
+
+    @POST("/hwc-api/opthalmicVisit/getAll")
+    suspend fun getOphthalmicVisits(@Body villageList: org.piramalswasthya.cho.network.VillageIdList): Response<ResponseBody>
 
 
 }
