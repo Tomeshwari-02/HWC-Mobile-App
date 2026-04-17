@@ -44,6 +44,10 @@ object WorkerUtils {
             .setConstraints(networkOnlyConstraint)
             .build()
 
+        val pullEarFromAmritWorker = OneTimeWorkRequestBuilder<PullEarFromAmritWorker>()
+            .setConstraints(networkOnlyConstraint)
+            .build()
+
 
 
         val workManager = WorkManager.getInstance(context)
@@ -52,6 +56,9 @@ object WorkerUtils {
             .then(pullFormAmritWorker)
             .then(pullBenFlowFromAmritWorker)
             .then(pullCbacFromAmritWorker)
+            .then(listOf(
+                pullEarFromAmritWorker
+            ))
             .enqueue()
     }
 
@@ -115,6 +122,16 @@ object WorkerUtils {
             .setConstraints(networkOnlyConstraint)
             .build()
 
+        val pushEarToAmritWorker = OneTimeWorkRequestBuilder<PushEarToAmritWorker>()
+            .setConstraints(networkOnlyConstraint)
+            .build()
+
+        val pullEarFromAmritWorker = OneTimeWorkRequestBuilder<PullEarFromAmritWorker>()
+            .setConstraints(networkOnlyConstraint)
+            .build()
+
+
+
         val workManager = WorkManager.getInstance(context)
         workManager
             .beginUniqueWork(syncOneTimeAmritSyncWorker, ExistingWorkPolicy.APPEND_OR_REPLACE, pullPatientFromAmritWorker)
@@ -127,8 +144,11 @@ object WorkerUtils {
             // The three doctor-info variants are independent — run them in parallel.
             .then(listOf(pushBenDoctorInfoPendingTestToAmrit, pushBenDoctorInfoWithoutTestToAmrit, pushBenDoctorInfoAfterTestToAmrit))
             // Specialty health pushes are also independent — run them in parallel.
-            .then(listOf(pushPWRToAmritWorker, pushInfantRegisterWorkRequest, pushPNCWorkRequest, pushECToAmritWorker, pushImmunizationWorkRequest))
+            .then(listOf(pushPWRToAmritWorker, pushInfantRegisterWorkRequest, pushPNCWorkRequest, pushECToAmritWorker, pushImmunizationWorkRequest, pushEarToAmritWorker))
 //           .then(pushLabDataToAmrit)
+            .then(listOf(
+                pullEarFromAmritWorker
+            ))
             .enqueue()
     }
 

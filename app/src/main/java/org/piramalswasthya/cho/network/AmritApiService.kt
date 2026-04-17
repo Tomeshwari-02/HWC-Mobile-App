@@ -35,6 +35,7 @@ import retrofit2.http.Headers
 import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
+import org.piramalswasthya.cho.model.EarDiagnosisNetwork
 
 interface AmritApiService {
 
@@ -278,6 +279,12 @@ interface AmritApiService {
     suspend fun getPharmacistStockItemList(
         @Body request: StockItemRequest
     ):Response<ResponseBody>
+
+    @POST("/hwc-api/earDiagnosis/saveAll")
+    suspend fun postEarForm(@Body earList: List<EarDiagnosisNetwork>): Response<ResponseBody>
+
+    @POST("/hwc-api/earDiagnosis/getAll")
+    suspend fun getEarVisits(@Body villageList: org.piramalswasthya.cho.network.VillageIdList): Response<ResponseBody>
 
 
 }
